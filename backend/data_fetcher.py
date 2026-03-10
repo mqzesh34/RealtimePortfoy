@@ -232,7 +232,7 @@ if __name__ == "__main__":
     threading.Thread(target=tefas_fetcher,name="TEFASThread", daemon=True).start()
     threading.Thread(target=lambda: asyncio.run(tv_connect()), name="TVThread", daemon=True).start()
     try:
-        socket.connect(HAREM_URL, headers={'Origin': HAREM_ORIGIN}, transports=['websocket'])
+        socket.connect(URL, headers={'Origin': ORIGIN}, transports=['websocket'])
         socket.wait()
     except Exception as e:
         print(f"Bağlantı Hatası: {e}")

@@ -7,8 +7,8 @@ import asyncio
 import websockets
 import random
 import string
+import requests
 from datetime import datetime, timedelta
-from tefas import Crawler
 
 socket = socketio.Client()
 
@@ -21,8 +21,7 @@ if not os.path.exists('data'):
     os.makedirs('data')
 
 HAREM_SYMBOLS = {
-    'KULCEALTIN': 'Gram Altın',
-    'USDTRY':'Dolar'
+    'KULCEALTIN': 'Gram Altın'
 }
 
 TV_SYMBOLS = {
@@ -31,7 +30,7 @@ TV_SYMBOLS = {
 }
 
 TEFAS_SYMBOLS = {
-    'PHE': 'PHE Fonu'
+    'PHE': ('PHE Yatırım Fonu', 'YAT')
 }
 
 
@@ -128,38 +127,31 @@ def tv_heartbeat(raw):
     return None
 
 def tefas_fetcher():
-    crawler = Crawler()
+
     while True:
         try:
             today = datetime.now()
-            three_days_ago = today - timedelta(days=3)
-            
-            start_date = three_days_ago.strftime("%Y-%m-%d")
-            end_date = today.strftime("%Y-%m-%d")
+            start = (today - timedelta(days=5)).strftime("%Y.%m.%d")
+            end   = today.strftime("%Y.%m.%d")
+            s = requests.Session()
 
-            for symbol, name in TEFAS_SYMBOLS.items():
-                df = crawler.fetch(
-                    start=start_date,
-                    end=end_date,
-                    name=symbol,
-                    columns=["date", "price"]
-                )
-                
-                if not df.empty:
-                    latest_row = df.sort_values(by="date", ascending=False).iloc[0]
-                    price = float(latest_row['price'])
-                    
+            for symbol, (name, fontip) in TEFAS_SYMBOLS.items():
+                resp = s.post("https://www.tefas.gov.tr/api/DB/BindHistoryInfo", data={
+                    "fontip": fontip, "sfonkod": symbol,
+                    "bastarih": start, "bittarih": end, "fonturkod": ""
+                }, timeout=15)
+                rows = [r for r in resp.json().get("data", []) if r.get("FONKODU") == symbol]
+                if rows:
+                    latest = sorted(rows, key=lambda x: x["TARIH"], reverse=True)[0]
+                    price = float(latest["FIYAT"])
                     with data_lock:
                         full_data[symbol] = {
                             'name':  name,
                             'alis':  price,
                             'satis': price,
-                            'time':  str(latest_row['date'])
+                            'time':  datetime.now().strftime('%d-%m-%Y %H:%M:%S')
                         }
                     write_live()
-            
-            time.sleep(1000)
-            
         except Exception as e:
             print(f"TEFAS error: {e}")
             time.sleep(1000)

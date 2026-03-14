@@ -147,8 +147,7 @@ def tefas_fetcher():
                     with data_lock:
                         full_data[symbol] = {
                             'name':  name,
-                            'alis':  price,
-                            'satis': price,
+                            'price':  price,
                             'time':  datetime.now().strftime('%d-%m-%Y %H:%M:%S')
                         }
                     write_live()
@@ -209,8 +208,7 @@ async def tv_connect():
                                 with data_lock:
                                     full_data[sym] = {
                                         'name':  TV_SYMBOLS[sym],
-                                        'alis':  price,
-                                        'satis': price,
+                                        'price': price,
                                         'time':  datetime.now().strftime('%d-%m-%Y %H:%M:%S')
                                     }
                                 write_live()

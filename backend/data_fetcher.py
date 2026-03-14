@@ -152,9 +152,10 @@ def tefas_fetcher():
                             'time':  datetime.now().strftime('%d-%m-%Y %H:%M:%S')
                         }
                     write_live()
+            time.sleep(3600)
         except Exception as e:
             print(f"TEFAS error: {e}")
-            time.sleep(1000)
+            time.sleep(60)
         
 
 async def tv_connect():
